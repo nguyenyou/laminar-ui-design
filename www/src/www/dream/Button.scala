@@ -124,6 +124,14 @@ object Button {
     def applyTo(button: Button): Unit
   }
 
+  object ButtonModifier {
+
+    implicit def toButtonIcon(
+        iconName: Icon.IconName
+    ): PropSetter[Icon.IconName.Selector] =
+      ButtonIcon(_ => iconName)
+  }
+
   // Concrete modifier types with built-in application logic
   final class PropSetter[V](val prop: Prop[V], val initialValue: V)
       extends ButtonModifier {
@@ -213,6 +221,11 @@ object Button {
       // Reactive icon updates - could be implemented if needed
       ()
     }
+
+    lazy val send = ButtonIcon(_.Send)
+
+    export Icon.IconName.{ArrowUpRight, Download, Send}
+
   }
 
   object ButtonEndIcon extends Prop[Icon.IconName.Selector]("endIcon") {
