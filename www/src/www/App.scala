@@ -13,7 +13,9 @@ case class App() {
       Icon(_.Send),
       Icon(_.Download),
       new Button().variant(_.Primary).label("Click me"),
-      new Button().variant(_.Primary).label(Val("Another day"))
+      new Button().variant(_.Primary).label(Val("Another day")),
+      Button(_.label := "Hello"),
+      Button(_.label <-- Val("World!"))
       /*
         Button(
           _.variant.primary

@@ -55,7 +55,7 @@ class Button() {
     this
   }
 
-  def label(v: Signal[String]) = {
+  def label(v: Source[String]) = {
     element.amend(
       text <-- v
     )
@@ -143,8 +143,20 @@ object Button {
     lazy val sm = ButtonSize(Size.Sm)
   }
 
+  object ButtonLabel extends Prop[String]("label") {
+    def applyValue(button: Button, value: String): Unit = {
+      button.label(value)
+      ()
+    }
+    def applySource(button: Button, source: Source[String]): Unit = {
+      button.label(source)
+      ()
+    }
+  }
+
   lazy val variant: ButtonVariant.type = ButtonVariant
   lazy val size: ButtonSize.type = ButtonSize
+  lazy val label: ButtonLabel.type = ButtonLabel
 
   type ButtonMods = Button.type => ButtonModifier
 
