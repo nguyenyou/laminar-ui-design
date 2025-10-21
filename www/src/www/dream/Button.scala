@@ -154,9 +154,39 @@ object Button {
     }
   }
 
+  object ButtonIcon extends Prop[Icon.IconName.Selector]("icon") {
+    def applyValue(button: Button, value: Icon.IconName.Selector): Unit = {
+      button.icon(value)
+      ()
+    }
+    def applySource(
+        button: Button,
+        source: Source[Icon.IconName.Selector]
+    ): Unit = {
+      // Reactive icon updates - could be implemented if needed
+      ()
+    }
+  }
+
+  object ButtonEndIcon extends Prop[Icon.IconName.Selector]("endIcon") {
+    def applyValue(button: Button, value: Icon.IconName.Selector): Unit = {
+      button.endIcon(value)
+      ()
+    }
+    def applySource(
+        button: Button,
+        source: Source[Icon.IconName.Selector]
+    ): Unit = {
+      // Reactive endIcon updates - could be implemented if needed
+      ()
+    }
+  }
+
   lazy val variant: ButtonVariant.type = ButtonVariant
   lazy val size: ButtonSize.type = ButtonSize
   lazy val label: ButtonLabel.type = ButtonLabel
+  lazy val icon: ButtonIcon.type = ButtonIcon
+  lazy val endIcon: ButtonEndIcon.type = ButtonEndIcon
 
   type ButtonMods = Button.type => ButtonModifier
 
