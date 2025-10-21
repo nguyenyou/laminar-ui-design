@@ -12,12 +12,12 @@ case class App() {
       Icon(_.ArrowUpRight),
       Icon(_.Send),
       Icon(_.Download),
-      new Button("Click me").variant(_.Primary)
+      new Button().variant(_.Primary)
       /*
         Button(
           _.variant.primary
         )("Click me")
-      
+
        */
     )
   }

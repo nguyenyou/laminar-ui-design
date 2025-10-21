@@ -8,7 +8,7 @@ import com.raquo.laminar.modifiers.RenderableNode
 
 class Button() {
   lazy val element = button(
-    cls("btn"),
+    cls("btn")
   )
 
   def variant(v: Button.Variant.Selector) = {
@@ -26,40 +26,30 @@ class Button() {
     this
   }
 
-  def variant(v: Source[Button.Variant]) = {
+  def variant(v: Source[Button.Variant]) = {}
 
-  }
+  def size(v: Button.Size) = {}
 
-  def size(v: Button.Size) = {
+  def size(v: Source[Button.Size]) = {}
 
-  }
+  def icon(v: Icon.IconName.Selector) = {}
 
-  def size(v: Source[Button.Size]) = {
+  def endIcon(v: Icon.IconName.Selector) = {}
 
-  }
-  
-  def icon(v: Icon.IconName.Selector) = {
-    
-  }
-  
-  def endIcon(v: Icon.IconName.Selector) = {
-    
-  }
-  
   def onClick(observer: Observer[dom.MouseEvent]) = {
     element.amend(
       L.onClick --> observer
     )
     this
   }
-  
+
   def onClick(fn: dom.MouseEvent => Unit) = {
     element.amend(
       L.onClick --> fn
     )
     this
   }
-  
+
   def label(v: String) = {
     element.amend(v)
     this
@@ -68,20 +58,22 @@ class Button() {
 }
 
 object Button {
-  implicit val renderableNode: RenderableNode[Button] = RenderableNode(_.element)
+  implicit val renderableNode: RenderableNode[Button] = RenderableNode(
+    _.element
+  )
 
   type Self = Button.type
 
-  sealed trait ButtonModifier {
-
-  }
+  sealed trait ButtonModifier {}
 
   trait PropSetter[V] extends ButtonModifier {
-
+    def prop: Prop[V]
+    def initialValue: V
   }
 
   trait PropUpdater[V] extends ButtonModifier {
-
+    def prop: Prop[V]
+    def source: Source[V]
   }
 
   class Prop[V](val name: String) {
@@ -90,14 +82,18 @@ object Button {
     }
 
     def :=(value: V): PropSetter[V] = {
+      val self = this
       new PropSetter[V] {
-
+        def prop: Prop[V] = self
+        def initialValue: V = value
       }
     }
 
     def <--(value: Source[V]): PropUpdater[V] = {
+      val self = this
       new PropUpdater[V] {
-
+        def prop: Prop[V] = self
+        def source: Source[V] = value
       }
     }
   }
@@ -105,9 +101,9 @@ object Button {
   enum Variant {
     case Primary, Secondary
   }
-  
+
   object Variant {
-    type Selector = Variant.type  => Variant
+    type Selector = Variant.type => Variant
   }
 
   enum Size {
@@ -131,6 +127,52 @@ object Button {
 
   def apply(mods: ButtonMods*) = {
     val btn = new Button()
-    button("Click MEEEE")
+
+    // Iterate through all modifiers and apply them to the button
+    mods.foreach { mod =>
+      // Call the modifier function with Button companion object to get the ButtonModifier
+      val modifier = mod(Button)
+
+      // Pattern match on the modifier type and apply it to the button
+      modifier match {
+        case setter: PropSetter[?] =>
+          // Check which property is being set by comparing the prop instance
+          setter.prop match {
+            case ButtonVariant =>
+              // Cast the value to the correct type and call the variant method
+              btn.variant(setter.initialValue)
+
+            case ButtonSize =>
+              // Cast the value to the correct type and call the size method
+              btn.size(setter.initialValue)
+
+            case _ =>
+              // Unknown property - ignore or log warning
+              ()
+          }
+
+        case updater: PropUpdater[?] =>
+          // Handle PropUpdater - for reactive Source-based updates
+          updater.prop match {
+            case ButtonVariant =>
+              // Cast the source to the correct type and call the variant method
+              btn.variant(updater.source)
+
+            case ButtonSize =>
+              // Cast the source to the correct type and call the size method
+              btn.size(updater.source)
+
+            case _ =>
+              // Unknown property - ignore or log warning
+              ()
+          }
+
+        case _ =>
+          // Handle any other ButtonModifier types
+          ()
+      }
+    }
+
+    btn
   }
 }
