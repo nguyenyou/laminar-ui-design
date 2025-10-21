@@ -231,11 +231,7 @@ object Button {
       // Reactive icon updates - could be implemented if needed
       ()
     }
-
-    lazy val send = ButtonIcon(Icon.IconName.Send)
-
     export Icon.IconName.{Selector as _, *}
-
   }
 
   object ButtonEndIcon extends Prop[Icon.IconName.Selector]("endIcon") {
