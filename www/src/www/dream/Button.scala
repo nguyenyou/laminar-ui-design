@@ -5,7 +5,29 @@ import org.scalajs.dom
 
 import com.raquo.laminar.modifiers.RenderableNode
 
+class Button() {
+  def variant(v: Button.Variant) = {
+    
+  }
+
+  def variant(v: Source[Button.Variant]) = {
+
+  }
+  
+  def size(v: Button.Size) = {
+    
+  }
+  
+  def size(v: Source[Button.Size]) = {
+    
+  }
+  
+  lazy val element = button("Click Click") 
+}
+
 object Button {
+  implicit val renderableNode: RenderableNode[Button] = RenderableNode(_.element) 
+  
   type Self = Button.type 
   
   trait ButtonModifier {
@@ -59,8 +81,7 @@ object Button {
 
   type ButtonMods = Button.type => ButtonModifier
 
-  def apply(mods: ButtonMods*): Button = {
-    
-    button("Click me")
+  def apply(mods: ButtonMods*) = {
+    button("Click MEEEE")
   }
 }

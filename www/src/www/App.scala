@@ -8,7 +8,6 @@ case class App() {
     div(
       cls("p-5 space-x-4"),
       Button(
-       _.variant <-- Val(Button.Variant.Primary)
       )
     )
   }
