@@ -16,6 +16,8 @@
     "vite": "npm:rolldown-vite@latest"
   },
   "dependencies": {
+    "lucide": "^0.546.0",
+    "lucide-static": "^0.546.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   }
