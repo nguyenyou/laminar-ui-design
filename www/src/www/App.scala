@@ -26,9 +26,10 @@ case class App() {
       Button(_.label := "Hello"),
       Button(_.onClick --> Observer[dom.MouseEvent](e => println("Clicked!"))),
       Button(_.label <-- Val("World!")),
-      Button(_.icon(_.Send)),
+      // Button(_.icon(_.Send)),
       Button(_.icon.send),
-      Button(_.icon.Download)
+      Button(_.icon.Download),
+      Button(_.icon := Icon.IconName.ArrowUpRight)
       /*
         Button(
           _.variant.primary

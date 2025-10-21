@@ -56,12 +56,22 @@ class Button() {
     this
   }
 
+  def icon(v: Icon.IconName) = {
+    slots.icon.set(Some(Icon(v)))
+    this
+  }
+
   def icon(v: Icon.IconName.Selector) = {
     slots.icon.set(Some(Icon(v)))
     this
   }
 
   def endIcon(v: Icon.IconName.Selector) = {
+    slots.endIcon.set(Some(Icon(v)))
+    this
+  }
+
+  def endIcon(v: Icon.IconName) = {
     slots.endIcon.set(Some(Icon(v)))
     this
   }
@@ -128,8 +138,8 @@ object Button {
 
     implicit def toButtonIcon(
         iconName: Icon.IconName
-    ): PropSetter[Icon.IconName.Selector] =
-      ButtonIcon(_ => iconName)
+    ): PropSetter[Icon.IconName] =
+      ButtonIcon(iconName)
   }
 
   // Concrete modifier types with built-in application logic
@@ -209,22 +219,22 @@ object Button {
     }
   }
 
-  object ButtonIcon extends Prop[Icon.IconName.Selector]("icon") {
-    def applyValue(button: Button, value: Icon.IconName.Selector): Unit = {
+  object ButtonIcon extends Prop[Icon.IconName]("icon") {
+    def applyValue(button: Button, value: Icon.IconName): Unit = {
       button.icon(value)
       ()
     }
     def applySource(
         button: Button,
-        source: L.Source[Icon.IconName.Selector]
+        source: L.Source[Icon.IconName]
     ): Unit = {
       // Reactive icon updates - could be implemented if needed
       ()
     }
 
-    lazy val send = ButtonIcon(_.Send)
+    lazy val send = ButtonIcon(Icon.IconName.Send)
 
-    export Icon.IconName.{ArrowUpRight, Download, Send}
+    export Icon.IconName.{Selector as _, *}
 
   }
 
