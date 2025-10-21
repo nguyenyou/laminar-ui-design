@@ -55,6 +55,13 @@ class Button() {
     this
   }
 
+  def label(v: Signal[String]) = {
+    element.amend(
+      text <-- v
+    )
+    this
+  }
+
 }
 
 object Button {
@@ -64,38 +71,34 @@ object Button {
 
   type Self = Button.type
 
-  sealed trait ButtonModifier {}
-
-  trait PropSetter[V] extends ButtonModifier {
-    def prop: Prop[V]
-    def initialValue: V
+  // Base trait for all button modifiers
+  sealed trait ButtonModifier {
+    // Type-safe apply method that each modifier must implement
+    def applyTo(button: Button): Unit
   }
 
-  trait PropUpdater[V] extends ButtonModifier {
-    def prop: Prop[V]
-    def source: Source[V]
+  // Concrete modifier types with built-in application logic
+  final class PropSetter[V](val prop: Prop[V], val initialValue: V)
+      extends ButtonModifier {
+    def applyTo(button: Button): Unit = prop.applyValue(button, initialValue)
   }
 
-  class Prop[V](val name: String) {
-    inline def apply(value: V) = {
-      this := value
-    }
+  final class PropUpdater[V](val prop: Prop[V], val source: Source[V])
+      extends ButtonModifier {
+    def applyTo(button: Button): Unit = prop.applySource(button, source)
+  }
 
-    def :=(value: V): PropSetter[V] = {
-      val self = this
-      new PropSetter[V] {
-        def prop: Prop[V] = self
-        def initialValue: V = value
-      }
-    }
+  // Abstract Prop class with type-safe application methods
+  abstract class Prop[V](val name: String) {
+    // Abstract methods that subclasses must implement for type-safe application
+    def applyValue(button: Button, value: V): Unit
+    def applySource(button: Button, source: Source[V]): Unit
 
-    def <--(value: Source[V]): PropUpdater[V] = {
-      val self = this
-      new PropUpdater[V] {
-        def prop: Prop[V] = self
-        def source: Source[V] = value
-      }
-    }
+    inline def apply(value: V): PropSetter[V] = this := value
+
+    def :=(value: V): PropSetter[V] = PropSetter(this, value)
+
+    def <--(source: Source[V]): PropUpdater[V] = PropUpdater(this, source)
   }
 
   enum Variant {
@@ -111,11 +114,31 @@ object Button {
   }
 
   object ButtonVariant extends Prop[Variant]("variant") {
+    def applyValue(button: Button, value: Variant): Unit = {
+      button.variant(value)
+      ()
+    }
+
+    def applySource(button: Button, source: Source[Variant]): Unit = {
+      button.variant(source)
+      ()
+    }
+
     lazy val primary = ButtonVariant(Variant.Primary)
     lazy val secondary = ButtonVariant(Variant.Secondary)
   }
 
   object ButtonSize extends Prop[Size]("size") {
+    def applyValue(button: Button, value: Size): Unit = {
+      button.size(value)
+      ()
+    }
+
+    def applySource(button: Button, source: Source[Size]): Unit = {
+      button.size(source)
+      ()
+    }
+
     lazy val xs = ButtonSize(Size.Xs)
     lazy val sm = ButtonSize(Size.Sm)
   }
@@ -125,53 +148,11 @@ object Button {
 
   type ButtonMods = Button.type => ButtonModifier
 
-  def apply(mods: ButtonMods*) = {
+  def apply(mods: ButtonMods*): Button = {
     val btn = new Button()
 
-    // Iterate through all modifiers and apply them to the button
-    mods.foreach { mod =>
-      // Call the modifier function with Button companion object to get the ButtonModifier
-      val modifier = mod(Button)
-
-      // Pattern match on the modifier type and apply it to the button
-      modifier match {
-        case setter: PropSetter[?] =>
-          // Check which property is being set by comparing the prop instance
-          setter.prop match {
-            case ButtonVariant =>
-              // Cast the value to the correct type and call the variant method
-              btn.variant(setter.initialValue)
-
-            case ButtonSize =>
-              // Cast the value to the correct type and call the size method
-              btn.size(setter.initialValue)
-
-            case _ =>
-              // Unknown property - ignore or log warning
-              ()
-          }
-
-        case updater: PropUpdater[?] =>
-          // Handle PropUpdater - for reactive Source-based updates
-          updater.prop match {
-            case ButtonVariant =>
-              // Cast the source to the correct type and call the variant method
-              btn.variant(updater.source)
-
-            case ButtonSize =>
-              // Cast the source to the correct type and call the size method
-              btn.size(updater.source)
-
-            case _ =>
-              // Unknown property - ignore or log warning
-              ()
-          }
-
-        case _ =>
-          // Handle any other ButtonModifier types
-          ()
-      }
-    }
+    // Apply all modifiers using the type-safe applyTo method
+    mods.foreach(_(Button).applyTo(btn))
 
     btn
   }
