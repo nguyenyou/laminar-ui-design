@@ -1,63 +1,110 @@
 package www.dream
 
-import com.raquo.laminar.api.L.*
 import com.raquo.laminar.api.L
+import com.raquo.laminar.api.L.given
 import org.scalajs.dom
 
 import com.raquo.laminar.modifiers.RenderableNode
+import com.raquo.laminar.modifiers.EventListener
+import com.raquo.laminar.keys.EventProp
 
 class Button() {
-  lazy val element = button(
-    cls("btn")
+  // Slot-based mechanism for consistent rendering order
+  // Using Element type to accommodate both HTML and SVG elements
+
+  object slots {
+    lazy val icon = L.Var[Option[L.SvgElement]](None)
+    lazy val label = L.Var[Option[String]](None)
+    lazy val endIcon = L.Var[Option[L.SvgElement]](None)
+  }
+
+  lazy val element = L.button(
+    L.cls("btn"),
+    // Render slots in consistent order: icon -> label -> endIcon
+    L.child.maybe <-- slots.icon.signal,
+    L.child.maybe <-- slots.label.signal.map(_.map(text => L.span(text))),
+    L.child.maybe <-- slots.endIcon.signal
   )
 
   def variant(v: Button.Variant.Selector) = {
     println(v(Button.Variant))
     element.amend(
-      cls("btn-primary")
+      L.cls("btn-primary")
     )
     this
   }
 
   def variant(v: Button.Variant) = {
     element.amend(
-      cls("btn-primary")
+      L.cls("btn-primary")
     )
     this
   }
 
-  def variant(v: Source[Button.Variant]) = {}
+  def variant(v: L.Source[Button.Variant]) = {
+    // TODO: Implement reactive variant updates
+    this
+  }
 
-  def size(v: Button.Size) = {}
+  def size(v: Button.Size) = {
+    // TODO: Implement size styling
+    this
+  }
 
-  def size(v: Source[Button.Size]) = {}
+  def size(v: L.Source[Button.Size]) = {
+    // TODO: Implement reactive size updates
+    this
+  }
 
-  def icon(v: Icon.IconName.Selector) = {}
+  def icon(v: Icon.IconName.Selector) = {
+    slots.icon.set(Some(Icon(v)))
+    this
+  }
 
-  def endIcon(v: Icon.IconName.Selector) = {}
+  def endIcon(v: Icon.IconName.Selector) = {
+    slots.endIcon.set(Some(Icon(v)))
+    this
+  }
 
-  def onClick(observer: Observer[dom.MouseEvent]) = {
+  def onClick[Out](
+      eventListener: EventProp[dom.MouseEvent] => EventListener[
+        dom.MouseEvent,
+        Out
+      ]
+  ) = {
+    element.amend(eventListener(L.onClick))
+    this
+  }
+
+  def onClick[Out](eventListener: EventListener[dom.MouseEvent, Out]) = {
+    element.amend(eventListener)
+    this
+  }
+
+  def onClick(observer: L.Observer[dom.MouseEvent]) = {
     element.amend(
       L.onClick --> observer
     )
     this
   }
 
-  def onClick(fn: dom.MouseEvent => Unit) = {
-    element.amend(
-      L.onClick --> fn
-    )
+  def attachEventListener[Ev <: dom.Event, Out](
+      eventListener: EventListener[Ev, Out]
+  ) = {
+    element.amend(eventListener)
     this
   }
 
   def label(v: String) = {
-    element.amend(v)
+    slots.label.set(Some(v))
     this
   }
 
-  def label(v: Source[String]) = {
+  def label(v: L.Source[String]) = {
+    // Bind the source to the labelSlot Var
+    // Convert Source to Observable to access map method
     element.amend(
-      text <-- v
+      v.toObservable.map(Some(_)) --> slots.label.writer
     )
     this
   }
@@ -83,7 +130,7 @@ object Button {
     def applyTo(button: Button): Unit = prop.applyValue(button, initialValue)
   }
 
-  final class PropUpdater[V](val prop: Prop[V], val source: Source[V])
+  final class PropUpdater[V](val prop: Prop[V], val source: L.Source[V])
       extends ButtonModifier {
     def applyTo(button: Button): Unit = prop.applySource(button, source)
   }
@@ -92,13 +139,13 @@ object Button {
   abstract class Prop[V](val name: String) {
     // Abstract methods that subclasses must implement for type-safe application
     def applyValue(button: Button, value: V): Unit
-    def applySource(button: Button, source: Source[V]): Unit
+    def applySource(button: Button, source: L.Source[V]): Unit
 
     inline def apply(value: V): PropSetter[V] = this := value
 
     def :=(value: V): PropSetter[V] = PropSetter(this, value)
 
-    def <--(source: Source[V]): PropUpdater[V] = PropUpdater(this, source)
+    def <--(source: L.Source[V]): PropUpdater[V] = PropUpdater(this, source)
   }
 
   enum Variant {
@@ -119,7 +166,7 @@ object Button {
       ()
     }
 
-    def applySource(button: Button, source: Source[Variant]): Unit = {
+    def applySource(button: Button, source: L.Source[Variant]): Unit = {
       button.variant(source)
       ()
     }
@@ -134,7 +181,7 @@ object Button {
       ()
     }
 
-    def applySource(button: Button, source: Source[Size]): Unit = {
+    def applySource(button: Button, source: L.Source[Size]): Unit = {
       button.size(source)
       ()
     }
@@ -148,7 +195,7 @@ object Button {
       button.label(value)
       ()
     }
-    def applySource(button: Button, source: Source[String]): Unit = {
+    def applySource(button: Button, source: L.Source[String]): Unit = {
       button.label(source)
       ()
     }
@@ -161,7 +208,7 @@ object Button {
     }
     def applySource(
         button: Button,
-        source: Source[Icon.IconName.Selector]
+        source: L.Source[Icon.IconName.Selector]
     ): Unit = {
       // Reactive icon updates - could be implemented if needed
       ()
@@ -175,7 +222,7 @@ object Button {
     }
     def applySource(
         button: Button,
-        source: Source[Icon.IconName.Selector]
+        source: L.Source[Icon.IconName.Selector]
     ): Unit = {
       // Reactive endIcon updates - could be implemented if needed
       ()
@@ -187,6 +234,25 @@ object Button {
   lazy val label: ButtonLabel.type = ButtonLabel
   lazy val icon: ButtonIcon.type = ButtonIcon
   lazy val endIcon: ButtonEndIcon.type = ButtonEndIcon
+
+  lazy val onClick = L.onClick
+
+  // Custom modifier for Laminar EventListener
+  final class EventListenerModifier[Ev <: dom.Event, Out](
+      val eventListener: EventListener[Ev, Out]
+  ) extends ButtonModifier {
+    def applyTo(button: Button): Unit = {
+      button.attachEventListener(eventListener)
+      ()
+    }
+  }
+
+  // Implicit conversion from Laminar EventListener to ButtonModifier
+  implicit def eventListenerToModifier[Ev <: dom.Event, Out](
+      eventListener: EventListener[Ev, Out]
+  ): EventListenerModifier[Ev, Out] = {
+    new EventListenerModifier(eventListener)
+  }
 
   type ButtonMods = Button.type => ButtonModifier
 
